@@ -1,0 +1,7 @@
+mediapipe         
+numpy            
+onnxruntime       
+opencv-python      
+scipy             
+tqdm          
+     
