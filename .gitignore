@@ -3,6 +3,8 @@
 venv/Lib/site-packages/absl/flags/__pycache__/_helpers.cpython-313.pyc
 venv/
 venv310/
+data/db/
+data/enroll/
 db/
 enroll/
 node_modules/
