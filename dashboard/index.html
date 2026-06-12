@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.A.R.A. System Dashboard</title>
+    <title>Benax Tracking System</title>
     <!-- Use Google Fonts for premium look -->
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
@@ -13,8 +13,8 @@
         :root {
             --primary-bg: #0a0a12;
             --panel-bg: #13131f;
-            --accent-color: #00d4ff;
-            /* Neon Blue */
+            --accent-color: #f0b429;
+            /* Benax gold */
             --alert-color: #ff0055;
             /* Neon Red */
             --success-color: #00ff9d;
@@ -44,7 +44,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radical-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.05), transparent 70%);
+            background: radial-gradient(circle at 50% 20%, rgba(240, 180, 41, 0.08), transparent 55%);
             z-index: -1;
         }
 
@@ -65,7 +65,26 @@
             color: var(--accent-color);
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            text-shadow: 0 0 12px rgba(240, 180, 41, 0.45);
+        }
+
+        .brand-sub {
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: #888;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .brand-tag {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(240, 180, 41, 0.35);
+            color: var(--accent-color);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
         }
 
         .container {
@@ -183,8 +202,9 @@
 <body>
 
     <header>
-        <h1>S.A.R.A. Vision Control</h1>
-        <div style="margin-top: 5px; font-size: 0.8rem; color: #666;">Distributed Actuation System • Team 313</div>
+        <h1>Benax Tracking System</h1>
+        <div class="brand-sub">Face recognition • Servo pan • Live MQTT</div>
+        <span class="brand-tag">Team 213</span>
     </header>
 
     <div class="container">
@@ -224,8 +244,8 @@
     </div>
 
     <script>
-        // Connect to Backend running on PC (Wi-Fi: 192.168.0.28)
-        const wsUrl = `ws://192.168.0.28:9002`;
+        // WebSocket on same machine that serves this page (Tecno pop LAN)
+        const wsUrl = `ws://${window.location.hostname}:9002`;
         let ws;
 
         const statusEl = document.getElementById('movement-status');
@@ -241,7 +261,7 @@
                 console.log('Connected to Backend');
                 connEl.textContent = 'CONNECTED';
                 connEl.className = 'status-badge connected';
-                addLog('System connected to backend.');
+                addLog('Benax Tracking System — connected to backend.');
             };
 
             ws.onclose = () => {
@@ -262,8 +282,16 @@
                         return;
                     }
 
-                    // Handle MQTT Movement messages
-                    // Expected: { "status": "MOVE_LEFT", "confidence": 0.9, "timestamp": ... }
+                    // Face snapshot (separate topic, keeps ESP32 movement msgs small)
+                    if (data.face_image && !data.status) {
+                        faceImageEl.src = 'data:image/jpeg;base64,' + data.face_image;
+                        faceImageEl.style.display = 'block';
+                        noFaceMsgEl.style.display = 'none';
+                        if (data.target) targetEl.textContent = `Target: ${data.target}`;
+                        return;
+                    }
+
+                    // Movement: { "status": "MOVE_LEFT", "confidence": 0.9, ... }
                     if (data.status) {
                         updateDashboard(data);
                     }

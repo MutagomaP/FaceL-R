@@ -7,9 +7,11 @@ const path = require('path');
 // Configuration
 // On VPS, we connect to local mosquitto. On PC, we might want to connect to VPS IP?
 // For Backend (running on VPS), it should connect to localhost (its own mosquitto).
+// Sync with src/network_config.py
 const MQTT_BROKER = 'mqtt://157.173.101.159';
 const TEAM_ID = 'team213';
 const MQTT_TOPIC_VS = `vision/${TEAM_ID}/movement`;
+const MQTT_TOPIC_SNAPSHOT = `vision/${TEAM_ID}/snapshot`;
 const WS_PORT = 9002;
 const HTTP_PORT = 8080; // Port for Dashboard HTML
 
@@ -19,9 +21,9 @@ const mqttClient = mqtt.connect(MQTT_BROKER);
 
 mqttClient.on('connect', () => {
     console.log(`Connected to MQTT Broker.`);
-    mqttClient.subscribe(MQTT_TOPIC_VS, (err) => {
+    mqttClient.subscribe([MQTT_TOPIC_VS, MQTT_TOPIC_SNAPSHOT], (err) => {
         if (!err) {
-            console.log(`Subscribed to topic: ${MQTT_TOPIC_VS}`);
+            console.log(`Subscribed to: ${MQTT_TOPIC_VS}, ${MQTT_TOPIC_SNAPSHOT}`);
         } else {
             console.error('MQTT Subscription Error:', err);
         }
@@ -53,7 +55,7 @@ wss.on('connection', (ws) => {
     console.log('New WebSocket Client connected');
 
     // Send initial status
-    ws.send(JSON.stringify({ type: 'STATUS', message: 'Connected to Vision Backend' }));
+    ws.send(JSON.stringify({ type: 'STATUS', message: 'Benax Tracking System online' }));
 
     ws.on('close', () => {
         console.log('Client disconnected');

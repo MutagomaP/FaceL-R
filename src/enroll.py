@@ -22,6 +22,7 @@ Controls:
 """
 
 from __future__ import annotations
+import argparse
 import json
 import time
 from dataclasses import dataclass
@@ -31,6 +32,7 @@ import cv2
 import numpy as np
 from .haar_5pt import Haar5ptDetector, align_face_5pt
 from .embed import ArcFaceEmbedderONNX
+from .camera import DEFAULT_USB_CAMERA, open_camera, print_cameras
 
 
 # -------------------------
@@ -168,6 +170,24 @@ def draw_status(
 # Main
 # -------------------------
 def main():
+    parser = argparse.ArgumentParser(description="Enroll a speaker face")
+    parser.add_argument(
+        "--camera",
+        default=str(DEFAULT_USB_CAMERA),
+        help="USB index (1=robot cam) or ESP32 URL (http://IP/stream)",
+    )
+    parser.add_argument(
+        "--list-cameras",
+        action="store_true",
+        help="List USB cameras and exit",
+    )
+    args = parser.parse_args()
+
+    if args.list_cameras:
+        print("Available USB cameras:")
+        print_cameras()
+        return
+
     cfg = EnrollConfig()
     ensure_dirs(cfg)
 
@@ -200,9 +220,8 @@ def main():
     auto = False
     last_auto = 0.0
 
-    cap = cv2.VideoCapture(2)
-    if not cap.isOpened():
-        raise RuntimeError("Failed to open camera.")
+    cap = open_camera(args.camera, auto_discover=True)
+    print(f"Using camera: {args.camera}")
 
     cv2.namedWindow(cfg.window_main, cv2.WINDOW_NORMAL)
     cv2.namedWindow(cfg.window_aligned, cv2.WINDOW_NORMAL)

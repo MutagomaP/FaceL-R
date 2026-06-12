@@ -16,12 +16,14 @@ import mediapipe as mp
 try:
     from .haar_5pt import Haar5ptDetector, align_face_5pt, _bbox_from_5pt, _clip_box_xyxy
     from .recognize import ArcFaceEmbedderONNX, FaceDBMatcher, load_db_npz
+    from .camera import open_camera
 except ImportError:
     # If run directly: python src/face_locking.py
     import sys
     sys.path.append(str(Path(__file__).parent.parent))
     from src.haar_5pt import Haar5ptDetector, align_face_5pt, _bbox_from_5pt, _clip_box_xyxy
     from src.recognize import ArcFaceEmbedderONNX, FaceDBMatcher, load_db_npz
+    from src.camera import open_camera
 
 # ---------------------------------------------------------
 # Action Logic
@@ -133,7 +135,9 @@ class FaceLockSystem:
         
         self.locked_frames = 0
         self.lost_frames = 0
-        self.MAX_LOST_FRAMES = 10  # Tolerance before unlocking
+        self.MAX_LOST_FRAMES = 25  # Tolerance before unlocking (brief occlusions)
+        self.last_target_face = None
+        self.last_target_sim = 0.0
         
         # We need to store the session file name
         ts = time.strftime("%Y%m%d%H%M%S")
@@ -160,7 +164,9 @@ class FaceLockSystem:
             f.write(line)
         print(f">> ACTION: {atype} ({details})")
 
-    def process_frame(self, frame: np.ndarray, embedder: ArcFaceEmbedderONNX) -> Tuple[np.ndarray, Optional[object]]:
+    def process_frame(
+        self, frame: np.ndarray, embedder: ArcFaceEmbedderONNX
+    ) -> Tuple[np.ndarray, Optional[object], float]:
         vis = frame.copy()
         H, W = vis.shape[:2]
 
@@ -181,7 +187,7 @@ class FaceLockSystem:
 
             if mr.accepted:
                 # It is a known person
-                is_target = (mr.name == self.target_name)
+                is_target = mr.name.lower() == self.target_name.lower()
                 
                 if is_target:
                     # Keep track of the best target candidate
@@ -218,6 +224,8 @@ class FaceLockSystem:
             if target_face is not None:
                 self.state = LockState.LOCKED
                 self.lost_frames = 0
+                self.last_target_face = target_face
+                self.last_target_sim = target_sim
                 self.log_action("LOCK_ACQUIRED", f"sim={target_sim:.2f}")
 
         # Note: If we just transitioned to LOCKED, we fall through to this block if we use 'if' 
@@ -227,6 +235,8 @@ class FaceLockSystem:
         if self.state == LockState.LOCKED:
             if target_face is not None:
                 self.lost_frames = 0
+                self.last_target_face = target_face
+                self.last_target_sim = target_sim
                 f = target_face
                 
                 # Highlight Target
@@ -238,7 +248,25 @@ class FaceLockSystem:
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
                     (0, 255, 0),
-                    2
+                    2,
+                )
+                cv2.putText(
+                    vis,
+                    f"conf={target_sim:.2f}",
+                    (f.x1, f.y2 + 22),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.55,
+                    (0, 255, 0),
+                    2,
+                )
+                cv2.putText(
+                    vis,
+                    f"Confidence: {target_sim * 100:.1f}%",
+                    (10, 90),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
                 )
                 
                 # Action Detection on Target
@@ -295,12 +323,29 @@ class FaceLockSystem:
                     self.state = LockState.SEARCHING
                     self.log_action("LOCK_LOST", "Target disappeared")
 
-        return vis, target_face
+        track_face = target_face
+        track_sim = target_sim
+        if (
+            track_face is None
+            and self.state == LockState.LOCKED
+            and self.last_target_face is not None
+            and self.lost_frames <= self.MAX_LOST_FRAMES
+        ):
+            track_face = self.last_target_face
+            track_sim = self.last_target_sim
+
+        return vis, track_face, track_sim
 
 
 def main():
     cfg = argparse.ArgumentParser()
     cfg.add_argument("--name", type=str, default="andrew", help="Target identity to lock onto")
+    cfg.add_argument(
+        "--camera",
+        type=str,
+        default="0",
+        help="USB index or ESP32 stream URL (http://IP/stream)",
+    )
     args = cfg.parse_args()
     
     # Init
@@ -322,8 +367,8 @@ def main():
     
     system = FaceLockSystem(args.name, matcher, det)
     
-    cap = cv2.VideoCapture(2)
-    print("Mask Locking System Started. Press 'q' to quit.")
+    cap = open_camera(args.camera)
+    print(f"Face Locking started (camera: {args.camera}). Press 'q' to quit.")
     
     while True:
         ok, frame = cap.read()
@@ -332,7 +377,7 @@ def main():
         # Mirror the frame (user requested to "remove" the flip, implying they want the opposite of current)
         # frame = cv2.flip(frame, 1)
         
-        vis, _ = system.process_frame(frame, embedder)
+        vis, _, _ = system.process_frame(frame, embedder)
         
         cv2.imshow("Face Locking", vis)
         if cv2.waitKey(1) & 0xFF == ord('q'):

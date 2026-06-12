@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import cv2
 import numpy as np
-import onnxruntime as ort
 
 try:
     import mediapipe as mp
@@ -158,10 +157,24 @@ class ArcFaceEmbedderONNX:
         input_size: Tuple[int, int] = (112, 112),
         debug: bool = False,
     ):
-        self.model_path = model_path
+        import onnxruntime as ort
+
+        path = Path(model_path)
+        if not path.is_file():
+            path = Path(__file__).resolve().parent.parent / model_path
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"ArcFace ONNX model not found at {model_path!r}. "
+                "Expected models/embedder_arcface.onnx in the project root."
+            )
+
+        self.model_path = str(path)
         self.in_w, self.in_h = int(input_size[0]), int(input_size[1])
         self.debug = bool(debug)
-        self.sess = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+        print(f"Loading ArcFace model ({path.name})...", flush=True)
+        self.sess = ort.InferenceSession(
+            self.model_path, providers=["CPUExecutionProvider"]
+        )
         self.in_name = self.sess.get_inputs()[0].name
         self.out_name = self.sess.get_outputs()[0].name
         if self.debug:
@@ -377,7 +390,7 @@ def main():
     )
     db = load_db_npz(db_path)
     matcher = FaceDBMatcher(db=db, dist_thresh=0.62)
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         raise RuntimeError("Camera not available")
     print("Recognize (multi-face). q=quit, r=reload DB, +/- threshold, d=debug overlay")

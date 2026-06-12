@@ -1,0 +1,3 @@
+16:38:44 | LOCK_ACQUIRED | sim=0.57
+16:38:44 | BLINK | EAR=0.20
+16:38:44 | MOVE_LEFT | nose_x=0.36

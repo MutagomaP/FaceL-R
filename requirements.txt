@@ -1,7 +1,8 @@
-mediapipe         
-numpy            
-onnxruntime       
-opencv-python      
-scipy             
-tqdm          
+mediapipe
+numpy
+onnxruntime
+opencv-python
+paho-mqtt
+scipy
+tqdm
      
