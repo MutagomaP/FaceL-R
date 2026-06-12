@@ -97,6 +97,8 @@ flowchart TB
     LOG_PC --> HIST
 ```
 
+
+
 ### Recognize → Track → Command pipeline
 
 ```mermaid
@@ -122,6 +124,8 @@ flowchart LR
     O --> P["ESP32 servo pan"]
 ```
 
+
+
 ### Component overview
 
 ```mermaid
@@ -139,6 +143,8 @@ graph TB
     PC -->|WebSocket| DASH[Dashboard]
     MQTT --> DASH
 ```
+
+
 
 ## Project Structure
 
@@ -163,16 +169,18 @@ FaceLockingServo/
 
 ## Network settings
 
-Wi-Fi and IP addresses are defined in **`src/network_config.py`** and must match **`esp32/*.ino`** sketches.
+Wi-Fi and IP addresses are defined in `**src/network_config.py**` and must match `**esp32/*.ino**` sketches.
 
-| Setting | Current value |
-|---------|----------------|
-| Wi-Fi SSID | `Tecno pop` |
-| Wi-Fi password | `tecnopop` |
-| PC IP (example) | `192.168.1.100` |
-| ESP32 IP (static) | `192.168.1.50` |
-| ESP32 stream | `http://192.168.1.50/stream` |
-| MQTT broker | `157.173.101.159` |
+
+| Setting           | Current value                |
+| ----------------- | ---------------------------- |
+| Wi-Fi SSID        | `Tecno pop`                  |
+| Wi-Fi password    | `tecnopop`                   |
+| PC IP (example)   | `192.168.1.100`              |
+| ESP32 IP (static) | `192.168.1.50`               |
+| ESP32 stream      | `http://192.168.1.50/stream` |
+| MQTT broker       | `157.173.101.159`            |
+
 
 Connect **both PC and ESP32** to the same Wi-Fi. After flashing, confirm in Serial Monitor (115200):
 
@@ -193,11 +201,13 @@ cd backend && npm install
 
 ### 2. Flash ESP32
 
-| Board | Sketch | Servo pin |
-|-------|--------|-----------|
-| ESP32-CAM (camera + servo) | `esp32/camera_servo/camera_servo.ino` | GPIO **12** |
-| ESP32 Dev Module (servo only) | `esp32/vision_servo/vision_servo.ino` | GPIO **5** |
-| Servo test only | `esp32/servo_test/servo_test.ino` | GPIO **12** |
+
+| Board                         | Sketch                                | Servo pin   |
+| ----------------------------- | ------------------------------------- | ----------- |
+| ESP32-CAM (camera + servo)    | `esp32/camera_servo/camera_servo.ino` | GPIO **12** |
+| ESP32 Dev Module (servo only) | `esp32/vision_servo/vision_servo.ino` | GPIO **5**  |
+| Servo test only               | `esp32/servo_test/servo_test.ino`     | GPIO **12** |
+
 
 Arduino IDE: **AI Thinker ESP32-CAM**, PSRAM **Enabled**. See `esp32/README.md` for wiring.
 
@@ -239,7 +249,7 @@ npm start
 **Terminal 2 — Vision node (USB robot camera, default):**
 
 ```bash
-python src/vision_node.py --broker 157.173.101.159 --name Patience --camera 1
+python src/vision_node.py --camera 1 --name Patience
 ```
 
 **Or ESP32-CAM stream:**
@@ -258,17 +268,19 @@ Press **q** in the vision window to quit.
 
 ### 6. Dashboard
 
-- On this PC: http://localhost:8080
-- From another device on **Tecno pop**: http://192.168.1.100:8080
+- On this PC: [http://localhost:8080](http://localhost:8080)
+- From another device on **Tecno pop**: [http://192.168.1.100:8080](http://192.168.1.100:8080)
 
 ## Camera options
 
-| Source | `--camera` value |
-|--------|------------------|
-| Laptop built-in webcam | `0` |
-| External USB robot camera (default) | `1` |
-| ESP32-CAM MJPEG stream | `http://192.168.1.50/stream` |
-| ESP32 mDNS (after flash) | `http://esp32cam.local/stream` |
+
+| Source                              | `--camera` value               |
+| ----------------------------------- | ------------------------------ |
+| Laptop built-in webcam              | `0`                            |
+| External USB robot camera (default) | `1`                            |
+| ESP32-CAM MJPEG stream              | `http://192.168.1.50/stream`   |
+| ESP32 mDNS (after flash)            | `http://esp32cam.local/stream` |
+
 
 **Test camera:**
 
@@ -288,10 +300,12 @@ python -m src.camera --camera http://192.168.1.50/stream --discover
 
 ## Evidence logging
 
-| Log | Location | Contents |
-|-----|----------|----------|
-| Session CSV | `data/logs/session_<name>_<timestamp>.csv` | timestamp, speaker_id, confidence, motor_status, spec_status, locked |
-| Action history | `logs/<name>_history_<timestamp>.txt` | lock acquire/lost, blinks, landmark actions |
+
+| Log            | Location                                   | Contents                                                             |
+| -------------- | ------------------------------------------ | -------------------------------------------------------------------- |
+| Session CSV    | `data/logs/session_<name>_<timestamp>.csv` | timestamp, speaker_id, confidence, motor_status, spec_status, locked |
+| Action history | `logs/<name>_history_<timestamp>.txt`      | lock acquire/lost, blinks, landmark actions                          |
+
 
 Session logs are created automatically when you run `vision_node.py`.
 
@@ -307,12 +321,14 @@ Speaker names are matched **case-insensitively** (`patience` → `Patience`).
 
 ### Wiring (ESP32-CAM + servo)
 
-| Component | Connection |
-|-----------|------------|
-| Servo signal | GPIO **12** (ESP32-CAM) or GPIO **5** (ESP32 Dev Module / `vision_servo.ino`) |
-| Servo VCC | **5V** external supply (recommended — do not power a standard servo from 3.3V) |
-| Servo GND | Common ground with ESP32 |
-| Camera | On-board OV2640 (ESP32-CAM) or USB webcam on PC |
+
+| Component    | Connection                                                                     |
+| ------------ | ------------------------------------------------------------------------------ |
+| Servo signal | GPIO **12** (ESP32-CAM) or GPIO **5** (ESP32 Dev Module / `vision_servo.ino`)  |
+| Servo VCC    | **5V** external supply (recommended — do not power a standard servo from 3.3V) |
+| Servo GND    | Common ground with ESP32                                                       |
+| Camera       | On-board OV2640 (ESP32-CAM) or USB webcam on PC                                |
+
 
 ### Safety
 
@@ -343,3 +359,4 @@ python src/vision_node.py --broker 157.173.101.159 --name Patience --camera 1
 python -m src.enroll --camera http://192.168.1.50/stream
 python src/vision_node.py --broker 157.173.101.159 --name Patience --camera http://192.168.1.50/stream
 ```
+
