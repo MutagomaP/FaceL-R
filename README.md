@@ -84,7 +84,7 @@ flowchart TB
     subgraph MONITOR["Activity 5 — Dashboard & Evidence"]
         BACKEND["backend/server.js<br/>MQTT → WebSocket"]
         DASH["Web Dashboard<br/>Lock status, movement, face snapshot"]
-        HIST["Session history files<br/>name_history_timestamp.txt"]
+        HIST["Session history files<br/>logs/name_history_timestamp.txt"]
     end
 
     DB -.->|load template| REC
@@ -291,7 +291,7 @@ python -m src.camera --camera http://192.168.1.50/stream --discover
 | Log | Location | Contents |
 |-----|----------|----------|
 | Session CSV | `data/logs/session_<name>_<timestamp>.csv` | timestamp, speaker_id, confidence, motor_status, spec_status, locked |
-| Action history | `<name>_history_<timestamp>.txt` | lock acquire/lost, blinks, landmark actions |
+| Action history | `logs/<name>_history_<timestamp>.txt` | lock acquire/lost, blinks, landmark actions |
 
 Session logs are created automatically when you run `vision_node.py`.
 

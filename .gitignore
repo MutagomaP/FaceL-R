@@ -11,3 +11,4 @@ dp.txt
 .venv/
 .venv310/
 __pycache__/
+logs/

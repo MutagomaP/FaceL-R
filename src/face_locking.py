@@ -139,10 +139,12 @@ class FaceLockSystem:
         self.last_target_face = None
         self.last_target_sim = 0.0
         
-        # We need to store the session file name
+        # Session log under project logs/
         ts = time.strftime("%Y%m%d%H%M%S")
         safe_name = "".join(c for c in target_name if c.isalnum())
-        self.history_file = Path(f"{safe_name}_history_{ts}.txt")
+        logs_dir = Path(__file__).resolve().parent.parent / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        self.history_file = logs_dir / f"{safe_name}_history_{ts}.txt"
         
         print(f"[FaceLock] Initialized. Target: {target_name}. Log: {self.history_file}")
 
